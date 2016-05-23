@@ -1,5 +1,5 @@
 #!/bin/bash
-# $Header: /usr/local/src/gentoo/gentoo-src/cvsroot/gentoo-src/build-docbook-catalog/build-docbook-catalog,v 1.20 2013/09/28 02:30:06 ottxor Exp $
+# $Header: /usr/local/src/gentoo/gentoo-src/cvsroot/gentoo-src/build-docbook-catalog/build-docbook-catalog,v 1.21 2016/05/23 15:53:13 haubi Exp $
 #
 # build-docbook-catalog: populate /etc/xml/docbook based in
 # installed docbook-xml-dtd versions.
@@ -62,6 +62,7 @@ main() {
 	if [[ ${ROOT} != "/" ]] ; then
 		echo "Working on root ${ROOT}"
 	fi
+	[[ // -ef / ]] || ROOT="/.${ROOT}" # "//" might refer to network
 
 	if [[ ! -d ${ROOT}${ROOTCONFDIR} ]] ; then
 		mkdir -p "${ROOT}${ROOTCONFDIR}" || error "could not create ${ROOTCONFDIR}"

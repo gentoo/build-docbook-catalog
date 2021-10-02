@@ -221,7 +221,7 @@ create_catalogs() {
 clean_catalog() {
 	local list f regex=$1 catalog=${ROOT}$2
 
-	list=$(egrep --only-matching "${regex}" "${catalog}" | sort -u)
+	list=$(grep -E --only-matching "${regex}" "${catalog}" | sort -u)
 	for f in ${list}; do
 		xmlcatalog --noout --del "${f}" "${catalog}"
 	done
@@ -265,7 +265,7 @@ populate_dtd() {
 		verb "  No entities available for ${dtd}"
 		return 0
 	fi
-	dtd_date=$(egrep --only-matching --max-count=1 \
+	dtd_date=$(grep -E --only-matching --max-count=1 \
 		'[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}' \
 		"${ROOT}${dtd}")
 	if [[ -z ${dtd_date} ]]; then

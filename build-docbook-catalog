@@ -161,6 +161,11 @@ multi_xmlcatalog_add() {
 create_catalogs() {
 	local adds
 
+	# Initialize catalogs if they don't exist or are corrupt.
+	if ! xmllint "${ROOT}${ROOTCATALOG}" >&/dev/null ; then
+		rm -f "${ROOTCATALOG}"
+		echo "Deleting corrupt ${ROOT}${ROOTCATALOG} and starting over"
+	fi
 	if [[ ! -r ${ROOT}${ROOTCATALOG} ]] ; then
 		echo "Creating XML Catalog root ${ROOTCATALOG}"
 		xmlcatalog --noout --create "${ROOT}${ROOTCATALOG}"
@@ -174,6 +179,11 @@ create_catalogs() {
 		clean_catalog "file://${CATALOG}" "${ROOTCATALOG}"
 	fi
 
+	# Initialize catalogs if they don't exist or are corrupt.
+	if ! xmllint "${ROOT}${CATALOG}" >&/dev/null ; then
+		rm -f "${ROOT}${CATALOG}"
+		echo "Deleting corrupt ${CATALOG} and starting over"
+	fi
 	if [[ ! -r ${ROOT}${CATALOG} ]] ; then
 		echo "Creating DocBook XML Catalog ${CATALOG}"
 		xmlcatalog --noout --create "${ROOT}${CATALOG}"

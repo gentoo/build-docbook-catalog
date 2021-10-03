@@ -1,13 +1,7 @@
 #!/bin/bash
-# $Header: /usr/local/src/gentoo/gentoo-src/cvsroot/gentoo-src/build-docbook-catalog/build-docbook-catalog,v 1.21 2016/05/23 15:53:13 haubi Exp $
-#
-# build-docbook-catalog: populate /etc/xml/docbook based in
-# installed docbook-xml-dtd versions.
-#
-# Copyright 2004-2012 Gentoo Foundation
+# Copyright 2004-2021 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # written by Aron Griffis
-#
 
 EPREFIX=
 ROOTCONFDIR="${EPREFIX}"/etc/xml
@@ -28,6 +22,7 @@ GETOPT=getopt
 usage() {
 	cat <<-EOF
 	Usage: ${ZERO} [options]
+	Regenerate the XML docbook catalog under ${ROOTCONFDIR}.
 
 	Options:
 	  -r, --root       ROOT path to work on

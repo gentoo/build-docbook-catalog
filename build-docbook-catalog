@@ -32,6 +32,7 @@ usage() {
 	Options:
 	  -r, --root       ROOT path to work on
 	  -v, --verbose    Be verbose
+	  -x, --debug      Run with debugging enabled
 	  -h, --help       This!
 	EOF
 	[[ $# -gt 0 ]] && eerror "$*"
@@ -44,13 +45,14 @@ usage() {
 main() {
 	local d v opts
 
-	opts=$(${GETOPT} -o hr:v --long help,root:,verbose -n "${ZERO}" -- "$@") || exit 1
+	opts=$(${GETOPT} -o hr:vx --long help,root:,verbose,debug -n "${ZERO}" -- "$@") || exit 1
 	eval set -- "${opts}"
 	while true; do
 		case $1 in
 			-h|--help) usage ;;
 			-r|--root) ROOT=$2 ; shift ;;
 			-v|--verbose) VERBOSE=true ;;
+			-x|--debug) set -x ;;
 			--) break ;;
 			*) usage "options parsing failed on $1!" ;;
 		esac

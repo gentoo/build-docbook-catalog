@@ -360,15 +360,15 @@ populate_entities() {
 			: $(( i += 2 ))
 		elif [[ ${avail[j]} < ${entities[i]} ]]; then
 			echo "Warning: Extra ISO entities file: ${avail[j]}"
-			: $(( j += j + 1 ))
+			: $(( j += 1 ))
 		elif [[ ${entities[i]} < ${avail[j]} ]]; then
 			echo "Warning: Entities file not found: ${entities[i]}"
-			: $(( i += i + 2 ))
+			: $(( i += 2 ))
 		elif [[ ${entities[i]} == ${avail[j]} ]]; then
 			xmlcatalog --noout --add "public" "${entities[i+1]}" \
 				"file://${isodir}/${entities[i]}" "${ROOT}${CATALOG}"
-			: $(( j += j + 1 ))
-			: $(( i += i + 2 ))
+			: $(( j += 1 ))
+			: $(( i += 2 ))
 		else
 			error "${0}: whoah, shouldn't be here"
 		fi

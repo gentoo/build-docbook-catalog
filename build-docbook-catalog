@@ -84,8 +84,8 @@ main() {
 
 	# Clean out old dtds from catalog
 	verb "Cleaning out old DocBook XML versions from ${CATALOG} and ${ROOTCATALOG}"
-	clean_catalog "${DOCBOOKDIR}/xml\(-simple\)*-dtd-[^/\"']*/[^/\"']*" "${CATALOG}"
-	clean_catalog "${DOCBOOKDIR}/xml\(-simple\)*-dtd-[^/\"']*/[^/\"']*" "${ROOTCATALOG}"
+	clean_catalog "${DOCBOOKDIR}/xml\(-simple\)*-dtd-[^/\"']*/[^/\"']*" "${CATALOG}.tmp"
+	clean_catalog "${DOCBOOKDIR}/xml\(-simple\)*-dtd-[^/\"']*/[^/\"']*" "${ROOTCATALOG}.tmp"
 
 	if set_dtds; then
 		for d in "${DTDS[@]}"; do
@@ -96,6 +96,14 @@ main() {
 		done
 		populate_entities
 	fi
+
+	sed -i \
+		-e "s:${ROOTCATALOG}\.tmp:${ROOTCATALOG}:g" \
+		-e "s:${CATALOG}\.tmp:${CATALOG}:g" \
+		"${ROOT}${ROOTCATALOG}.tmp" \
+		"${ROOT}${CATALOG}.tmp" || error "could not clean up"
+	mv "${ROOT}${ROOTCATALOG}.tmp" "${ROOT}${ROOTCATALOG}"
+	mv "${ROOT}${CATALOG}.tmp" "${ROOT}${CATALOG}"
 
 	# NB: Don't delete the lock since we can't delete files by fd, and if we do
 	# it by path, we might delete the lock while other processes grab it.
@@ -173,11 +181,13 @@ create_catalogs() {
 		if [[ ! -r ${ROOT}${ROOTCATALOG} ]] ; then
 			error "failed creating ${ROOTCATALOG}"
 		fi
+		cp "${ROOT}${ROOTCATALOG}" "${ROOT}${ROOTCATALOG}.tmp"
 	else
 		verb "Found XML Catalog root ${ROOTCATALOG}"
 		# clean out existing entries
 		verb "  Cleaning existing ${CATALOG} delegates from ${ROOTCATALOG}"
-		clean_catalog "file://${CATALOG}" "${ROOTCATALOG}"
+		cp "${ROOTCATALOG}" "${ROOTCATALOG}.tmp"
+		clean_catalog "file://${CATALOG}" "${ROOTCATALOG}.tmp"
 	fi
 
 	# Initialize catalogs if they don't exist or are corrupt.
@@ -194,24 +204,25 @@ create_catalogs() {
 	else
 		verb "Found DocBook XML Catalog ${CATALOG}"
 	fi
+	cp "${ROOT}${CATALOG}" "${ROOT}${CATALOG}.tmp"
 
 	# dtd pointers
 	verb "  Populating ${ROOTCATALOG} with DTD delegates to ${CATALOG}"
 	adds=(
-		"delegatePublic"  "-//OASIS//ENTITIES DocBook"          "${CATALOG}"
-		"delegatePublic"  "-//OASIS//ELEMENTS DocBook"          "${CATALOG}"
-		"delegatePublic"  "-//OASIS//DTD DocBook"               "${CATALOG}"
-		"delegateSystem"  "http://www.oasis-open.org/docbook/"  "${CATALOG}"
-		"delegateURI"     "http://www.oasis-open.org/docbook/"  "${CATALOG}"
+		"delegatePublic"  "-//OASIS//ENTITIES DocBook"          "${CATALOG}.tmp"
+		"delegatePublic"  "-//OASIS//ELEMENTS DocBook"          "${CATALOG}.tmp"
+		"delegatePublic"  "-//OASIS//DTD DocBook"               "${CATALOG}.tmp"
+		"delegateSystem"  "http://www.oasis-open.org/docbook/"  "${CATALOG}.tmp"
+		"delegateURI"     "http://www.oasis-open.org/docbook/"  "${CATALOG}.tmp"
 	)
-	multi_xmlcatalog_add "${ROOTCATALOG}" "${adds[@]}"
+	multi_xmlcatalog_add "${ROOTCATALOG}.tmp" "${adds[@]}"
 
 	# entities pointer
 	verb "  Populating ${ROOTCATALOG} with ISO entities delegate to ${CATALOG}"
 	adds=(
-		"delegatePublic"  "ISO 8879:1986"  "${CATALOG}"
+		"delegatePublic"  "ISO 8879:1986"  "${CATALOG}.tmp"
 	)
-	multi_xmlcatalog_add "${ROOTCATALOG}" "${adds[@]}"
+	multi_xmlcatalog_add "${ROOTCATALOG}.tmp" "${adds[@]}"
 }
 
 #
@@ -259,7 +270,7 @@ populate_dtd() {
 		"rewriteSystem"  "http://www.oasis-open.org/docbook/xml/${v}"                            "${docbookdir}"
 		"rewriteURI"     "http://www.oasis-open.org/docbook/xml/${v}"                            "${docbookdir}"
 	)
-	multi_xmlcatalog_add "${CATALOG}" "${adds[@]}"
+	multi_xmlcatalog_add "${CATALOG}.tmp" "${adds[@]}"
 
 	# grab the RCS date from docbookx.dtd for comparison purposes
 	if [[ ! -f ${ROOT}${docbookdir}/ent/iso-lat1.ent ]]; then
@@ -305,7 +316,7 @@ populate_simple_dtd() {
 		"rewriteSystem"  "http://www.oasis-open.org/docbook/xml/simple/${v}"  "${docbookdir}"
 		"rewriteURI"     "http://www.oasis-open.org/docbook/xml/simple/${v}"  "${docbookdir}"
 	)
-	multi_xmlcatalog_add "${CATALOG}" "${adds[@]}"
+	multi_xmlcatalog_add "${CATALOG}.tmp" "${adds[@]}"
 }
 
 #
@@ -367,7 +378,7 @@ populate_entities() {
 			: $(( i += 2 ))
 		elif [[ ${entities[i]} == "${avail[j]}" ]]; then
 			xmlcatalog --noout --add "public" "${entities[i+1]}" \
-				"file://${isodir}/${entities[i]}" "${ROOT}${CATALOG}"
+				"file://${isodir}/${entities[i]}" "${ROOT}${CATALOG}.tmp"
 			: $(( j += 1 ))
 			: $(( i += 2 ))
 		else
@@ -386,8 +397,8 @@ populate_xsl() {
 	local type=$1
 
 	# Delete current entries from the catalog (delete legacy versioned entries too)
-	clean_catalog "${DOCBOOKDIR}/${type}-stylesheets(-[0-9\.]+)?" "${CATALOG}"
-	clean_catalog "${DOCBOOKDIR}/${type}-stylesheets(-[0-9\.]+)?" "${ROOTCATALOG}"
+	clean_catalog "${DOCBOOKDIR}/${type}-stylesheets(-[0-9\.]+)?" "${CATALOG}.tmp"
+	clean_catalog "${DOCBOOKDIR}/${type}-stylesheets(-[0-9\.]+)?" "${ROOTCATALOG}.tmp"
 
 	local xsldir=${DOCBOOKDIR}/${type}-stylesheets
 
@@ -406,17 +417,17 @@ populate_xsl() {
 
 	verb "  Populating ${ROOTCATALOG} with XSL delegations"
 	adds=(
-		"delegateSystem"  "http://docbook.sourceforge.net/release/${type}/"  "${CATALOG}"
-		"delegateURI"     "http://docbook.sourceforge.net/release/${type}/"  "${CATALOG}"
+		"delegateSystem"  "http://docbook.sourceforge.net/release/${type}/"  "${CATALOG}.tmp"
+		"delegateURI"     "http://docbook.sourceforge.net/release/${type}/"  "${CATALOG}.tmp"
 	)
-	multi_xmlcatalog_add "${ROOTCATALOG}" "${adds[@]}"
+	multi_xmlcatalog_add "${ROOTCATALOG}.tmp" "${adds[@]}"
 
 	verb "  Populating ${CATALOG} with XSL stylesheets"
 	adds=(
 		"rewriteSystem"  "http://docbook.sourceforge.net/release/${type}/current"  "${xsldir}"
 		"rewriteURI"     "http://docbook.sourceforge.net/release/${type}/current"  "${xsldir}"
 	)
-	multi_xmlcatalog_add "${CATALOG}" "${adds[@]}"
+	multi_xmlcatalog_add "${CATALOG}.tmp" "${adds[@]}"
 }
 
 # Call the main routine

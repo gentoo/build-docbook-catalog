@@ -14,7 +14,8 @@ ROOTCONFDIR="${EPREFIX}"/etc/xml
 ROOTCATALOG=${ROOTCONFDIR}/catalog
 CATALOG=${ROOTCONFDIR}/docbook
 DOCBOOKDIR="${EPREFIX}"/usr/share/sgml/docbook
-DTDS=
+DTDS=()
+SIMPLE_DTDS=()
 LATEST_DTD=
 LATEST_DATE=
 VERBOSE=false
@@ -56,7 +57,7 @@ main() {
 		shift
 	done
 
-	: ${ROOT:=/}
+	: "${ROOT:=/}"
 	[[ ${ROOT} != */ ]] && ROOT="${ROOT}/"
 	[[ ${ROOT} != /* ]] && ROOT="${PWD}${ROOT}"
 	if [[ ${ROOT} != "/" ]] ; then
@@ -88,11 +89,11 @@ main() {
 	clean_catalog "${DOCBOOKDIR}/xml\(-simple\)*-dtd-[^/\"']*/[^/\"']*" "${ROOTCATALOG}"
 
 	if set_dtds; then
-		for d in ${DTDS}; do
-			populate_dtd ${d}
+		for d in "${DTDS[@]}"; do
+			populate_dtd "${d}"
 		done
-		for d in ${SIMPLE_DTDS}; do
-			populate_simple_dtd ${d}
+		for d in "${SIMPLE_DTDS[@]}"; do
+			populate_simple_dtd "${d}"
 		done
 		populate_entities
 	fi
@@ -122,17 +123,17 @@ error() {
 # fill in the DTDS variable based on installed versions
 #
 set_dtds() {
-	DTDS= SIMPLE_DTS=
+	DTDS=() SIMPLE_DTDS=()
 
 	local d=${ROOT}${DOCBOOKDIR}
 	if [[ -d ${d} ]] ; then
 		pushd "${d}" >/dev/null || return 1
-		DTDS=$(find xml-dtd-*/ -name docbookx.dtd)
-		SIMPLE_DTDS=$(find xml-simple-dtd-*/ -name sdocbook.dtd)
-		popd >/dev/null
+		mapfile -d $'\0' DTDS < <(find xml-dtd-*/ -name docbookx.dtd -print0)
+		mapfile -d $'\0' SIMPLE_DTDS < <(find xml-simple-dtd-*/ -name sdocbook.dtd -print0)
+		popd >/dev/null || return 1
 	fi
 
-	if [[ -z ${DTDS} ]]; then
+	if [[ ${#DTDS[@]} -eq 0 ]]; then
 		echo "No installed DocBook XML DTDs found"
 		return 1
 	else
@@ -346,10 +347,10 @@ populate_entities() {
 	)
 
 	# here are the entities available; assume no spaces in filenames...
-	avail=($(ls "${ROOT}${isodir}" | sort))
+	mapfile -d $'\0' avail < <(find "${ROOT}${isodir}" -maxdepth 1 -type f -printf '%f\0' | sort -z)
 
 	# double-check the lists
-	verb "  Populating ${CATALOG} with ISO DocBook entities"
+	verb "  Populating ${CATALOG} with ${#avail[@]} ISO DocBook entities"
 	i=0 ; j=0
 	while [[ ${i} -lt ${#entities[@]} || ${j} -lt ${#avail[@]} ]]; do
 		if [[ ${i} -ge ${#entities[@]} ]]; then
@@ -358,13 +359,13 @@ populate_entities() {
 		elif [[ ${j} -ge ${#avail[@]} ]]; then
 			echo "Warning: Entities file not found: ${entities[i]}"
 			: $(( i += 2 ))
-		elif [[ ${avail[j]} < ${entities[i]} ]]; then
+		elif [[ ${avail[j]} < "${entities[i]}" ]]; then
 			echo "Warning: Extra ISO entities file: ${avail[j]}"
 			: $(( j += 1 ))
-		elif [[ ${entities[i]} < ${avail[j]} ]]; then
+		elif [[ ${entities[i]} < "${avail[j]}" ]]; then
 			echo "Warning: Entities file not found: ${entities[i]}"
 			: $(( i += 2 ))
-		elif [[ ${entities[i]} == ${avail[j]} ]]; then
+		elif [[ ${entities[i]} == "${avail[j]}" ]]; then
 			xmlcatalog --noout --add "public" "${entities[i+1]}" \
 				"file://${isodir}/${entities[i]}" "${ROOT}${CATALOG}"
 			: $(( j += 1 ))

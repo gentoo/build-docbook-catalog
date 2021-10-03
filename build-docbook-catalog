@@ -69,14 +69,11 @@ main() {
 		mkdir -p "${ROOT}${ROOTCONFDIR}" || error "could not create ${ROOTCONFDIR}"
 	fi
 
-	local lock="${ROOT}${ROOTCONFDIR}"/build-docbook-catalog-lock
+	local lock="${ROOT}/run/lock/build-docbook-catalog.lock"
 	(
 	# Lock the dir to avoid trashing other runs that might
 	# be running parallel.
-	touch "${lock}".$$ && \
-		until ln "${lock}".$$ "${lock}" 2>/dev/null; do sleep 1; done && \
-		rm "${lock}".$$
-	[[ -f ${lock}.$$ ]] && error "unable to lock ${ROOTCONFDIR}"
+	flock 200
 
 	create_catalogs			# will exit on error
 	for type in xsl xsl-ns xsl-saxon xsl-xalan; do
@@ -98,8 +95,9 @@ main() {
 		populate_entities
 	fi
 
-	)
-	rm "${lock}"
+	# NB: Don't delete the lock since we can't delete files by fd, and if we do
+	# it by path, we might delete the lock while other processes grab it.
+	) 200>>"${lock}"
 
 	exit 0
 }

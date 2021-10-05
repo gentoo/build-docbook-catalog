@@ -25,10 +25,10 @@ usage() {
 	Regenerate the XML docbook catalog under ${ROOTCONFDIR}.
 
 	Options:
-	  -r, --root       ROOT path to work on
-	  -v, --verbose    Be verbose
-	  -x, --debug      Run with debugging enabled
-	  -h, --help       This!
+	  -r, --root <ROOT>   Path to work on (defaults to \$ROOT)
+	  -v, --verbose       Be verbose
+	  -x, --debug         Run with debugging enabled
+	  -h, --help          This!
 	EOF
 	[[ $# -gt 0 ]] && eerror "$*"
 	exit 0

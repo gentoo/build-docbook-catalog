@@ -66,7 +66,12 @@ main() {
 		mkdir -p "${ROOT}${ROOTCONFDIR}" || error "could not create ${ROOTCONFDIR}"
 	fi
 
-	local lock="${ROOT}/run/lock/build-docbook-catalog.lock"
+	local lock_dir="${ROOT}/run/lock"
+	if [[ ! -d ${lock_dir} ]] ; then
+		error "${lock_dir}: missing critical system path; please create it"
+	fi
+
+	local lock="${lock_dir}/build-docbook-catalog.lock"
 	(
 	# Lock the dir to avoid trashing other runs that might
 	# be running parallel.

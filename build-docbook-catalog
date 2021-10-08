@@ -8,6 +8,7 @@ ROOTCONFDIR="${EPREFIX}"/etc/xml
 ROOTCATALOG=${ROOTCONFDIR}/catalog
 CATALOG=${ROOTCONFDIR}/docbook
 DOCBOOKDIR="${EPREFIX}"/usr/share/sgml/docbook
+LOCKDIR=${EPREFIX}/run/lock
 DTDS=()
 SIMPLE_DTDS=()
 LATEST_DTD=
@@ -66,7 +67,7 @@ main() {
 		mkdir -p "${ROOT}${ROOTCONFDIR}" || error "could not create ${ROOTCONFDIR}"
 	fi
 
-	local lock_dir="${ROOT}/run/lock"
+	local lock_dir="${ROOT}${LOCKDIR}"
 	if [[ ! -d ${lock_dir} ]] ; then
 		error "${lock_dir}: missing critical system path; please create it"
 	fi

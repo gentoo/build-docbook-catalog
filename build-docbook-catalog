@@ -173,7 +173,7 @@ create_catalogs() {
 
 	# Initialize catalogs if they don't exist or are corrupt.
 	if [[ -r ${ROOT}${ROOTCATALOG} ]] && ! xmllint "${ROOT}${ROOTCATALOG}" >&/dev/null ; then
-		rm -f "${ROOTCATALOG}"
+		rm -f "${ROOT}${ROOTCATALOG}"
 		echo "Deleting corrupt ${ROOT}${ROOTCATALOG} and starting over"
 	fi
 	if [[ ! -r ${ROOT}${ROOTCATALOG} ]] ; then

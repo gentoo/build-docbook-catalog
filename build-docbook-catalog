@@ -137,8 +137,10 @@ set_dtds() {
 	local d=${ROOT}${DOCBOOKDIR}
 	if [[ -d ${d} ]] ; then
 		pushd "${d}" >/dev/null || return 1
-		mapfile -d $'\0' DTDS < <(find xml-dtd-*/ -name docbookx.dtd -print0)
-		mapfile -d $'\0' SIMPLE_DTDS < <(find xml-simple-dtd-*/ -name sdocbook.dtd -print0)
+		shopt -s nullglob
+		DTDS=( xml-dtd-*/docbookx.dtd )
+		SIMPLE_DTDS=( xml-simple-dtd-*/sdocbook.dtd )
+		shopt -u nullglob
 		popd >/dev/null || return 1
 	fi
 
